@@ -18,7 +18,28 @@ module.exports = {
 
     url: {
       type: 'string',
+      required: true,
+      unique: true
+    },
+
+    email: {
+      type: 'string',
+      defaultsTo: ''
+    },
+
+    note: {
+      type: 'string',
+      defaultsTo: ''
+    },
+
+    hash: {
+      type: 'string',
       required: true
+    },
+
+    reputation: {
+      type: 'integer',
+      defaultsTo: 0
     },
 
     status: {
@@ -28,12 +49,12 @@ module.exports = {
 
     indexfiles: {
       type: 'boolean',
-      defaultsTo: true
+      defaultsTo: false
     },
 
     removedead: {
       type: 'boolean',
-      defaultsTo: true
+      defaultsTo: false
     },
 
     total: {

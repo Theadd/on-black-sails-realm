@@ -34,6 +34,12 @@ module.exports.connections = {
     host: 'localhost',
     port: 27040,
     database: 'onblacksailsrealm'
+  },
+
+  redis: {
+    adapter: 'sails-redis',
+    host: 'localhost',
+    port: 6379
   }
 
 };
