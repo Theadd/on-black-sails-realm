@@ -36,30 +36,47 @@ module.exports = {
         hash: params.hash
       }
 
-      var message = new Message(data)
-
-      message.verifyURL(function (err) {
+      ClusterHandler.exists(data, function (err, exists) {
         if (err) {
           res.json({
             error: err.message
           })
         } else {
-          Cluster.create(data).exec(function(err, entry) {
-            console.log(entry)
+          var message = new Message(data)
+
+          message.verifyURL(function (err) {
             if (err) {
               res.json({
                 error: err.message
               })
             } else {
-              res.json({
-                error: false,
-                data: entry
-              })
+              if (!exists) {
+                Cluster.create(data).exec(function (err, entry) {
+                  console.log(entry)
+                  if (err) {
+                    res.json({
+                      error: err.message
+                    })
+                  } else {
+                    res.json({
+                      error: false,
+                      data: { cluster: entry.id }
+                    })
+                  }
+                })
+              } else {
+                res.json({
+                  error: false,
+                  data: { cluster: exists }
+                })
+              }
             }
+
           })
         }
-
       })
+
+
 
     } else {
       res.json({
