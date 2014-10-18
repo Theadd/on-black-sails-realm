@@ -15,16 +15,8 @@ ClusterHandler.prototype.exists = function (data, callback) {
     Cluster.findOne({url: data.url }, function (err, entry) {
       if (err) return callback(err)
 
-      if (entry.id || false) {
-        if (typeof data.hash !== "undefined") {
-          if (entry.hash == data.hash) {
-            return callback(null, entry.id)
-          } else {
-            return callback(new Error('Public address already registered but key does not match.'))
-          }
-        } else {
-          return callback(null, true)
-        }
+      if (entry && entry.id) {
+        return callback(null, entry.id)
       } else {
         return callback(null, false)
       }

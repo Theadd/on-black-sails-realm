@@ -65,9 +65,19 @@ module.exports = {
                   }
                 })
               } else {
-                res.json({
-                  error: false,
-                  data: { cluster: exists }
+                Cluster.update({ id: exists }, {
+                  hash: data.hash
+                }, function (err) {
+                  if (err) {
+                    res.json({
+                      error: err.message
+                    })
+                  } else {
+                    res.json({
+                      error: false,
+                      data: { cluster: exists }
+                    })
+                  }
                 })
               }
             }
