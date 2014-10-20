@@ -33,7 +33,9 @@ module.exports = {
       var data = {
         name: params.name,
         url: params.url,
-        hash: params.hash
+        hash: params.hash,
+        indexfiles: params.indexfiles || false,
+        removedead: params.removedead || false
       }
 
       ClusterHandler.exists(data, function (err, exists) {
@@ -66,7 +68,9 @@ module.exports = {
                 })
               } else {
                 Cluster.update({ id: exists }, {
-                  hash: data.hash
+                  hash: data.hash,
+                  indexfiles: data.indexfiles,
+                  removedead: data.removedead
                 }, function (err) {
                   if (err) {
                     res.json({

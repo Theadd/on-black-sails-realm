@@ -70,6 +70,13 @@ module.exports = {
     scraped: {
       type: 'integer',
       defaultsTo: 0
+    },
+
+    toJSON: function() {
+      var obj = this.toObject()
+      delete obj.email
+      delete obj.hash
+      return obj
     }
 
   }
