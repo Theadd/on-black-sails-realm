@@ -30,7 +30,7 @@ Message.prototype.verifyURL = function (callback) {
       return callback(e)
     }
   }, function(error) {
-    callback(error)
+    callback(new Error("Error " + error.code + " in HTTP request: " + url))
   })
 
 }
