@@ -98,6 +98,28 @@ module.exports = {
       })
     }
 
+  },
+
+  update: function(req, res) {
+    var params = req.params.all()
+
+    delete params.id
+    var message = new Message(params)
+
+    message.validate(function(err, data) {
+      if (!err) {
+        var url = data.url
+        delete data.url
+
+        Cluster.update({ url: url }, data, function (err, entries) {
+          res.json({
+            error: false
+          })
+        })
+      }
+
+    })
+
   }
 
 }

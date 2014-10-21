@@ -1,7 +1,7 @@
 var requestify = require('requestify')
-var crypto = require('crypto')
 var bcrypt = require('bcrypt')
 var extend = require('util')._extend
+var objectHash = require('object-hash')
 
 module.exports = Message
 
@@ -14,7 +14,9 @@ function Message (data) {
 
 Message.prototype.verifyURL = function (callback) {
   var self = this,
-    url = self._data.url + 'settings/verify?key=' + self.buildKey(self._data.hash, sails.config.publicaddress)
+    url = self._data.url + 'realm/verify?key=' +
+      self.buildKey(self._data.hash, {url: sails.config.publicaddress}) +
+      '&url=' + sails.config.publicaddress
 
   requestify.get(url).then(function(response) {
     response.getBody()
@@ -36,8 +38,32 @@ Message.prototype.verifyURL = function (callback) {
 }
 
 Message.prototype.buildKey = function (key, data) {
-  var dataHash = crypto.createHash('md5').update(JSON.stringify(data)).digest("hex")
+  return bcrypt.hashSync(key + objectHash(data), 10)
+}
 
-  return bcrypt.hashSync(key + dataHash, 10)
+Message.prototype.validate = function (callback) {
+  var self = this,
+    key = self._data.key || ''
+
+  delete self._data.key
+
+  var dataHash = objectHash(self._data)
+
+  Cluster.findOne({url: self._data.url }, function (err, entry) {
+    if (err) return callback(err)
+
+    if (entry && entry.hash) {
+      var valid = bcrypt.compareSync(entry.hash + dataHash, key)
+
+      if (!valid) {
+        return callback(new Error("Invalid key"))
+      } else {
+        return callback(null, self._data)
+      }
+    } else {
+      return callback(new Error("Cluster not found"))
+    }
+  })
+
 }
 
