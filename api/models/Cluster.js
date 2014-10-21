@@ -72,8 +72,21 @@ module.exports = {
       defaultsTo: 0
     },
 
+    private: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    newagreements: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
     toJSON: function() {
       var obj = this.toObject()
+      if (obj.private || false) {
+        obj.url = 'PRIVATE'
+      }
       delete obj.email
       delete obj.hash
       return obj

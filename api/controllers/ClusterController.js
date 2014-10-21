@@ -90,8 +90,6 @@ module.exports = {
         }
       })
 
-
-
     } else {
       res.json({
         error: "Missing required parameters."
@@ -115,6 +113,42 @@ module.exports = {
           res.json({
             error: false
           })
+        })
+      }
+    })
+
+  },
+
+  show: function(req, res) {
+    var params = req.params.all()
+
+    delete params.id
+    var message = new Message(params)
+
+    message.validate(function(err, data) {
+      if (!err) {
+        Cluster.findOne({ url: data.url }, function (err, entry) {
+          if (err) {
+            res.json({
+              error: err.message
+            })
+          } else {
+            var obj = {
+              'private': entry.private,
+              newagreements: entry.newagreements,
+              status: entry.status,
+              note: entry.note,
+              email: entry.email
+            }
+            res.json({
+              error: false,
+              data: obj
+            })
+          }
+        })
+      } else {
+        res.json({
+          error: "Not authorized."
         })
       }
 
