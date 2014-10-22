@@ -28,5 +28,21 @@ ClusterHandler.prototype.exists = function (data, callback) {
 
 }
 
+ClusterHandler.prototype.createAgreement = function (params, callback) {
+  var data = extend({}, params)
+
+  data.hash = Common.GenerateRandomKey(15, 12)
+  data.receiver = Number(data.receiver)
+  data.sender = Number(data.sender)
+  delete data.url
+  delete data.id
+
+  Agreement.create(data).exec(function (err, entry) {
+    if (err) return callback(err)
+    return callback(null, entry)
+  })
+
+}
+
 
 
