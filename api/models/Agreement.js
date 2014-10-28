@@ -56,12 +56,13 @@ module.exports = {
 
     status: {
       type: 'string',
-      enum: ['pending', 'accepted', 'denied', 'cancelled', 'paused'],
+      enum: ['pending', 'accepted', 'denied', 'cancelled', 'paused', 'deleted'],
       defaultsTo: 'pending'
     },
 
     toJSON: function() {
       var obj = this.toObject()
+      delete obj.hash
       return obj
     }
 
