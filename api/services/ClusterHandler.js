@@ -64,7 +64,7 @@ ClusterHandler.prototype.createAgreement = function (params, callback) {
 
   Agreement.create(data).exec(function (err, entry) {
     if (err) return callback(err)
-    self.performAgreementAction({
+    self._performAgreementAction({
       type: 'request',
       note: '',
       agreement: entry.id,
@@ -77,13 +77,94 @@ ClusterHandler.prototype.createAgreement = function (params, callback) {
   })
 }
 
-ClusterHandler.prototype.performAgreementAction = function (params, callback) {
+
+ClusterHandler.prototype.performAgreementAction = function (action, agreementid, senderid, callback) {
+  var self = this, valid = false, isSender = false
+
+  Agreement.findOne({id: agreementid }, function (err, agreement) {
+    if (err) return callback(err)
+    if (agreement && agreement.id) {
+
+      var actionParams = {
+        type: action,
+        note: '',
+        agreement: agreement.id,
+        sender: senderid,
+        receiver: 0
+      }
+
+      if (agreement.sender == senderid) {
+        actionParams.receiver = agreement.receiver
+        isSender = true
+      } else if (agreement.receiver == senderid) {
+        actionParams.receiver = agreement.sender
+      } else {
+        return callback(new Error("Not part of this agreement."))
+      }
+
+      switch (agreement.status) {
+        case 'pending':
+          switch (action) {
+            case 'accept': valid = !isSender; break
+            case 'refuse': valid = !isSender; break
+            case 'cancel': valid = isSender; break
+          }
+          break;
+        case 'accepted':
+          switch (action) {
+            case 'pause': valid = true; break
+            case 'resume': valid = true; break
+            case 'cancel': valid = true; break
+          }
+          break;
+        case 'denied':
+          switch (action) {
+            case 'delete': valid = isSender; break
+          }
+          break;
+        case 'cancelled':
+          switch (action) {
+            case 'delete': valid = isSender; break
+          }
+          break;
+        case 'paused':
+          switch (action) {
+            case 'resume': valid = true; break
+            case 'cancel': valid = true; break
+          }
+          break;
+      }
+
+      if (!valid) return callback(new Error("Invalid action '" + action + "' on '" + agreement.status + "' status."))
+      self._performAgreementAction(actionParams, callback)
+    }
+  })
+}
+
+ClusterHandler.prototype._performAgreementAction = function (params, callback) {
   console.log("\nraw params as argument of performAgreementAction: ")
   console.log(params)
   console.log(" ")
+  callback = callback || function () {}
   Action.create(params).exec(function (err, entry) {
     if (err) return callback(err)
+
+    //update agreement status
+    var status = ''
+    switch (params.type) {
+      case 'accept': status = 'accepted'; break
+      case 'refuse': status = 'denied'; break
+      case 'cancel': status = 'cancelled'; break
+      case 'pause': status = 'paused'; break
+      case 'resume': status = 'accepted'; break
+      case 'delete': status = 'deleted'; break
+    }
+    if (status.length) {
+      Agreement.update({ id: params.agreement }, { status: status }, function () {})
+    }
+
     var message = new Message(params)
+
     message.sendMessageToReceiver('message/create', function (err, response) {
       if (response || false) {
         Action.update({ id: entry.id }, { received: true }, function () {})
@@ -102,8 +183,7 @@ ClusterHandler.prototype.retryPendingActionsOf = function (receiver) {
         var message = new Message(entries[i])
         message.sendMessageToReceiver('message/create', function (err, response) {
           if (response || false) {
-            Action.update({ id: entries[i].id }, { received: true }, function () {
-            })
+            Action.update({ id: entries[i].id }, { received: true }, function () {})
           }
         })
       } catch (e) {}
