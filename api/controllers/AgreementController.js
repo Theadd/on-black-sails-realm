@@ -55,6 +55,61 @@ module.exports = {
 
   },
 
+  hash: function (req, res) {
+
+    var params = req.params.all()
+
+    ClusterHandler.exists(params, function (err, clusterid) {
+      if (err) {
+        res.json({
+          error: err.message
+        })
+      } else {
+        if (!clusterid) {
+          res.json({
+            error: 'Unexpected error.'
+          })
+        } else {
+          Agreement.findOne(
+            {
+              where: {
+                id: params.agreement,
+                status: 'accepted',
+                or: [
+                  { sender: clusterid },
+                  { receiver: clusterid }
+                ]
+              }
+            }).exec(function (err, entry) {
+              if (err) {
+                res.json({
+                  error: err.message
+                })
+              } else if (entry && entry.hash) {
+                Cluster.findOne({id: clusterid}).exec(function (err, cluster) {
+                  if (err || !(cluster && cluster.hash)) {
+                    res.json({
+                      error: err.message || "Unexpected error."
+                    })
+                  } else {
+                    res.json({
+                      error: false,
+                      data: Common.Encode(entry.hash, cluster.hash)
+                    })
+                  }
+                })
+              } else {
+                res.json({
+                  error: "Unexpected error."
+                })
+              }
+            })
+        }
+      }
+    })
+
+  },
+
   create: function (req, res) {
     var params = req.params.all()
 
@@ -82,6 +137,53 @@ module.exports = {
         } else {
           res.json({
             error: err.message
+          })
+        }
+      })
+
+    } else {
+      res.json({
+        error: "Missing required parameters."
+      })
+    }
+
+  },
+
+  /** ACTIONS **/
+
+  'action': function(req, res) {
+    var params = req.params.all()
+    if ((params.agreement || false) && (params.type || false)) {
+      delete params.id
+
+      ClusterHandler.exists(params, function (err, clusterid) {
+        if (err) {
+          res.json({
+            error: err.message
+          })
+        } else {
+          var message = new Message(params)
+
+          message.validate(function (err, data) {
+            if (!err) {
+              //perform action
+              ClusterHandler.performAgreementAction(params.type, params.agreement, clusterid, function (err, response) {
+                if (err) {
+                  res.json({
+                    error: err.message
+                  })
+                } else {
+                  res.json({
+                    error: false,
+                    data: response || true
+                  })
+                }
+              })
+            } else {
+              res.json({
+                error: err.message
+              })
+            }
           })
         }
       })

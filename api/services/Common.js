@@ -9,6 +9,8 @@ var crypto = require('crypto')
 module.exports.GenerateRandomKey = GenerateRandomKey
 module.exports.StringXOR = StringXOR
 module.exports.SanitizeRequestParameters = SanitizeRequestParameters
+module.exports.Encode = Encode
+module.exports.Decode = Decode
 
 function GenerateRandomKey (len, salt) {
   len = len || 15
@@ -50,4 +52,18 @@ function SanitizeRequestParameters (input) {
     console.log("\tTYPEOF " + i + ": " + (typeof output[i]) + ", VALUE: " + output[i])
   }
   return output
+}
+
+function Encode (input, key){
+  var cipher = crypto.createCipher('aes-256-cbc', key)
+  var crypted = cipher.update(input, 'utf8', 'hex')
+  crypted += cipher.final('hex');
+  return crypted;
+}
+
+function Decode (input, key){
+  var decipher = crypto.createDecipher('aes-256-cbc', key)
+  var dec = decipher.update(input, 'hex', 'utf8')
+  dec += decipher.final('utf8');
+  return dec;
 }
