@@ -54,6 +54,16 @@ module.exports = {
       defaultsTo: false
     },
 
+    incomingallfields: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
+    outgoingallfields: {
+      type: 'boolean',
+      defaultsTo: false
+    },
+
     status: {
       type: 'string',
       enum: ['pending', 'accepted', 'denied', 'cancelled', 'paused', 'deleted'],
